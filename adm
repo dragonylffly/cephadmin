@@ -21,6 +21,6 @@ if [ m$1 = m"log" ]; then
 	if [ m$3 = m"" ]; then
 		number=9
 	fi
-	awk '/done/{$3="";$4="";if(FNR>'$line'){print}}' $file | tail -n $number
+	awk '/123/{$3="";$4="";if(FNR>'$line'){print}}' $file | tail -n $number
 	exit 0
 fi
