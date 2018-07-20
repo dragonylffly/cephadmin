@@ -1,0 +1,24 @@
+#!/bin/sh
+if [ m$1 = m"run" ]; then
+	echo "mmm" >> /var/log/ceph/ceph-osd.0.log
+	cmd=""
+	m=0
+	for var in $*
+	do
+		if [ $m != 0 ]; then
+			cmd="$cmd$var "
+		fi
+		m=$m+1
+	done
+	$cmd
+	exit 0
+fi
+if [ m$1 = m"log" ]; then
+	file="/var/log/ceph/ceph-$2.log"
+	number=$3
+	if [ m$3 = m"" ]; then
+		number=9
+	fi
+	awk '/done/{$3="";$4="";print}' $file | tail -n $number
+	exit 0
+fi
