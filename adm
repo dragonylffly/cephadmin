@@ -15,10 +15,12 @@ if [ m$1 = m"run" ]; then
 fi
 if [ m$1 = m"log" ]; then
 	file="/var/log/ceph/ceph-$2.log"
+	line=`grep -n "mmm" $file | tail -1 | cut -d ":" -f 1`
+	#echo $line
 	number=$3
 	if [ m$3 = m"" ]; then
 		number=9
 	fi
-	awk '/done/{$3="";$4="";print}' $file | tail -n $number
+	awk '/done/{$3="";$4="";if(FNR>'$line'){print}}' $file | tail -n $number
 	exit 0
 fi
