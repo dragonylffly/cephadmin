@@ -13,8 +13,21 @@ if [ m$1 = m"run" ]; then
 	$cmd
 	exit 0
 fi
+if [ m$1 = m"install" ]; then
+	if [ ! -d "/usr/local/lib/ceph/erasure-code" ]; then
+		mkdir -p /usr/local/lib/ceph/erasure-code
+	fi
+	install /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib/ceph/erasure-code/libec_jerasure.so
+	install /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib/ceph/erasure-code/libec_lrc.so
+	install /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib/ceph/erasure-code/libec_isa.so
+	exit 0
+fi
 if [ m$1 = m"log" ]; then
-	file="/var/log/ceph/ceph-$2.log"
+	if [ $# -gt 1 ]; then
+		file="/var/log/ceph/ceph-$2.log"
+	else
+		file="/var/log/ceph/ceph-osd.0.log"
+	fi
 	line=`grep -n "mmm" $file | tail -1 | cut -d ":" -f 1`
 	#echo $line
 	number=$3
@@ -23,4 +36,25 @@ if [ m$1 = m"log" ]; then
 	fi
 	awk '/123/{$3="";$4="";if(FNR>'$line'){print}}' $file | tail -n $number
 	exit 0
+fi
+if [ m$1 = m"restart" ]; then
+	pkill ceph-osd
+	echo "wait osds exit"
+	sleep 3
+	tem=`pgrep ceph-osd`
+	while [ "m$tem" != "m" ]
+	do
+		pkill ceph-osd
+		sleep 3
+	done
+	echo "restart the osds"
+	ceph-osd -i 0 >/dev/null 2>&1
+	sleep 3
+	echo "wait cluster status"
+	tem=`ceph -s | tail -n 2 | sed -n '1p' | awk '{print $3}'`
+	while [ "m$tem" != "mactive+clean" ]
+	do
+		tem=`ceph -s | tail -n 2 | sed -n '1p' | awk '{print $3}'`
+		sleep 3
+	done
 fi
