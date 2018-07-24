@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+
 if [ m$1 = m"run" ]; then
 	echo "mmm" >> /var/log/ceph/ceph-osd.0.log
 	cmd=""
@@ -29,12 +30,19 @@ if [ m$1 = m"log" ]; then
 		file="/var/log/ceph/ceph-osd.0.log"
 	fi
 	line=`grep -n "mmm" $file | tail -1 | cut -d ":" -f 1`
-	#echo $line
-	number=$3
-	if [ m$3 = m"" ]; then
-		number=9
+	awk '/123/{gsub("123", "");$3="";$4="";if(FNR>'$line'){print}}' $file
+	exit 0
+fi
+if [ m$1 = m"make" ]; then
+	cd /home/me/codes/ceph/build
+	make -j12 >/dev/null 2>&1
+	if [ $? -ne 0 ]; then
+		echo error
+		exit 0
 	fi
-	awk '/123/{$3="";$4="";if(FNR>'$line'){print}}' $file | tail -n $number
+	install /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib/ceph/erasure-code/libec_jerasure.so
+	install /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib/ceph/erasure-code/libec_lrc.so
+	install /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib/ceph/erasure-code/libec_isa.so
 	exit 0
 fi
 if [ m$1 = m"restart" ]; then
@@ -50,6 +58,11 @@ if [ m$1 = m"restart" ]; then
 	echo "restart the osds"
 	ceph-osd -i 0 >/dev/null 2>&1
 	sleep 3
+	tem=`ceph -s | tail -n 8 | sed -n '1p' | awk '{print $4}'`
+	if [ $tem = 0 ]; then
+		echo "osds none start"
+		exit 0
+	fi
 	echo "wait cluster status"
 	tem=`ceph -s | tail -n 2 | sed -n '1p' | awk '{print $3}'`
 	while [ "m$tem" != "mactive+clean" ]
