@@ -30,12 +30,12 @@ if [ m$1 = m"log" ]; then
 		file="/var/log/ceph/ceph-osd.0.log"
 	fi
 	line=`grep -n "mmm" $file | tail -1 | cut -d ":" -f 1`
-	awk '/123/{gsub("123", "");$3="";$4="";if(FNR>'$line'){print}}' $file
+	awk '/123/{gsub("123", "");gsub("/home/me/codes/ceph/src/","");$3="";$4="";if(FNR>'$line'){print}}' $file
 	exit 0
 fi
 if [ m$1 = m"make" ]; then
 	cd /home/me/codes/ceph/build
-	make -j12 >/dev/null 2>&1
+	make -j12 >/dev/null
 	if [ $? -ne 0 ]; then
 		echo error
 		exit 0
@@ -54,6 +54,7 @@ if [ m$1 = m"restart" ]; then
 	do
 		pkill ceph-osd
 		sleep 3
+		tem=`pgrep ceph-osd`
 	done
 	echo "restart the osds"
 	ceph-osd -i 0 >/dev/null 2>&1
