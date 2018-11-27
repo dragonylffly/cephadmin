@@ -14,10 +14,39 @@ if [ m$1 = m"run" ]; then
 	$cmd
 	exit 0
 fi
+if [ m$1 = m"create" ]; then
+    if [ ! -d "/etc/ceph" ]; then
+        mkdir -p /etc/ceph
+    fi
+    cd /etc/ceph
+    m=`uuidgen`
+    monmaptool --create --add 0 192.168.7.133:6789 --fsid $m monmap
+    rm -fr /var/lib/ceph/*
+    if [ ! -d "/var/lib/ceph" ]; then
+        mkdir -p /var/lib/ceph
+    fi
+    mkdir -p /var/lib/ceph/mon/ceph-0
+    ceph-authtool --create-keyring ceph.mon.keyring --gen-key -n mon. --cap mon 'allow *'
+    ceph-authtool --create-keyring ceph.client.admin.keyring --gen-key -n client.admin --set-uid=0 --cap mon 'allow *' --cap osd 'allow *'
+    ceph-authtool ceph.mon.keyring --import-keyring ceph.client.admin.keyring
+    ceph-mon --mkfs -i 0 --monmap monmap --keyring ceph.mon.keyring
+    mkdir -p /var/lib/ceph/osd/ceph-0
+    ceph-osd -i 0 --mkfs
+    ceph-mon -i 0
+    ceph osd create
+    ceph osd crush add osd.0 1.0 root=default host=ceph2
+    ceph-osd -i 0
+    ceph-mgr -i 0
+fi
 if [ m$1 = m"install" ]; then
 	if [ ! -d "/usr/local/lib/ceph/erasure-code" ]; then
 		mkdir -p /usr/local/lib/ceph/erasure-code
 	fi
+    if [ ! -d "/usr/local/lib/rados-classes" ]; then
+        mkdir -p /usr/local/lib/rados-classes/
+    fi
+    install /home/me/codes/ceph/build/lib/libcls_rbd.so /usr/local/lib/rados-classes/libcls_rbd.so
+    install /home/me/codes/ceph/build/lib/libcls_lock.so /usr/local/lib/rados-classes/libcls_locks.so
 	install /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib/ceph/erasure-code/libec_jerasure.so
 	install /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib/ceph/erasure-code/libec_lrc.so
 	install /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib/ceph/erasure-code/libec_isa.so
@@ -40,6 +69,8 @@ if [ m$1 = m"make" ]; then
 		echo error
 		exit 0
 	fi
+    install /home/me/codes/ceph/build/lib/libcls_rbd.so /usr/local/lib/rados-classes/libcls_rbd.so
+    install /home/me/codes/ceph/build/lib/libcls_lock.so /usr/local/lib/rados-classes/libcls_locks.so
 	install /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib/ceph/erasure-code/libec_jerasure.so
 	install /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib/ceph/erasure-code/libec_lrc.so
 	install /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib/ceph/erasure-code/libec_isa.so
