@@ -17,19 +17,19 @@ fi
 pkg()
 {
 
-    if [ ! -d "/usr/local/lib64/ceph/erasure-code" ]; then
-        mkdir -p /usr/local/lib64/ceph/erasure-code
+    if [ ! -d "/usr/local/lib/ceph/erasure-code" ]; then
+        mkdir -p /usr/local/lib/ceph/erasure-code
     fi
-    if [ ! -d "/usr/local/lib64/rados-classes" ]; then
-        mkdir -p /usr/local/lib64/rados-classes/
+    if [ ! -d "/usr/local/lib/rados-classes" ]; then
+        mkdir -p /usr/local/lib/rados-classes/
     fi
-    rm -fr /usr/local/lib64/ceph/erasure-code/*
-    rm -fr /usr/local/lib64/rados-classes/*
-    install /home/me/codes/ceph/build/lib/libcls_rbd.so /usr/local/lib64/rados-classes/libcls_rbd.so
-    install /home/me/codes/ceph/build/lib/libcls_lock.so /usr/local/lib64/rados-classes/libcls_locks.so
-    install /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib64/ceph/erasure-code/libec_jerasure.so
-    install /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib64/ceph/erasure-code/libec_lrc.so
-    install /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib64/ceph/erasure-code/libec_isa.so
+    rm -fr /usr/local/lib/ceph/erasure-code/*
+    rm -fr /usr/local/lib/rados-classes/*
+    install /home/me/codes/ceph/build/lib/libcls_rbd.so /usr/local/lib/rados-classes/libcls_rbd.so
+    install /home/me/codes/ceph/build/lib/libcls_lock.so /usr/local/lib/rados-classes/libcls_locks.so
+    install /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib/ceph/erasure-code/libec_jerasure.so
+    install /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib/ceph/erasure-code/libec_lrc.so
+    install /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib/ceph/erasure-code/libec_isa.so
 }
 if [ m$1 = m"create" ]; then
     if [ ! -d "/etc/ceph" ]; then
