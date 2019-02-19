@@ -1,7 +1,12 @@
 #!/bin/bash
 
+osd_num=3
+
 if [ m$1 = m"run" ]; then
-	echo "mmm" >> /var/log/ceph/ceph-osd.0.log
+    for ((j=0; j<$osd_num; j++))
+    do
+	    echo "mmm" > /var/log/ceph/ceph-osd.$j.log
+    done
 	cmd=""
 	m=0
 	for var in $*
@@ -26,7 +31,7 @@ pkg()
     rm -fr /usr/local/lib/ceph/erasure-code/*
     rm -fr /usr/local/lib/rados-classes/*
     install /home/me/codes/ceph/build/lib/libcls_rbd.so /usr/local/lib/rados-classes/libcls_rbd.so
-    install /home/me/codes/ceph/build/lib/libcls_lock.so /usr/local/lib/rados-classes/libcls_locks.so
+    install /home/me/codes/ceph/build/lib/libcls_lock.so /usr/local/lib/rados-classes/libcls_lock.so
     install /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib/ceph/erasure-code/libec_jerasure.so
     install /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib/ceph/erasure-code/libec_lrc.so
     install /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib/ceph/erasure-code/libec_isa.so
@@ -70,22 +75,11 @@ if [ m$1 = m"create" ]; then
     ceph-mgr -i 0
 fi
 if [ m$1 = m"install" ]; then
-    if [ ! -d "/usr/local/lib/ceph/erasure-code" ]; then
-        mkdir -p /usr/local/lib/ceph/erasure-code
-    fi
-    if [ ! -d "/usr/local/lib/rados-classes" ]; then
-        mkdir -p /usr/local/lib/rados-classes/
-    fi
-    install /home/me/codes/ceph/build/lib/libcls_rbd.so /usr/local/lib/rados-classes/libcls_rbd.so
-    install /home/me/codes/ceph/build/lib/libcls_lock.so /usr/local/lib/rados-classes/libcls_locks.so
-    install /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib/ceph/erasure-code/libec_jerasure.so
-    install /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib/ceph/erasure-code/libec_lrc.so
-    install /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib/ceph/erasure-code/libec_isa.so
-    exit 0
+    pkg
 fi
 if [ m$1 = m"log" ]; then
 	if [ $# -gt 1 ]; then
-		file="/var/log/ceph/ceph-$2.log"
+		file="/var/log/ceph/ceph-osd.$2.log"
 	else
 		file="/var/log/ceph/ceph-osd.0.log"
 	fi
@@ -95,16 +89,16 @@ if [ m$1 = m"log" ]; then
 fi
 if [ m$1 = m"make" ]; then
 	cd /home/me/codes/ceph/build
-	make -j12 >/dev/null
+	make -j6 >/dev/null
 	if [ $? -ne 0 ]; then
 		echo error
 		exit 0
 	fi
-    install /home/me/codes/ceph/build/lib/libcls_rbd.so /usr/local/lib/rados-classes/libcls_rbd.so
-    install /home/me/codes/ceph/build/lib/libcls_lock.so /usr/local/lib/rados-classes/libcls_locks.so
-	install /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib/ceph/erasure-code/libec_jerasure.so
-	install /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib/ceph/erasure-code/libec_lrc.so
-	install /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib/ceph/erasure-code/libec_isa.so
+    if [ $# -gt 1 ]; then
+      if [ m$2 = m"pkg" ]; then
+        pkg
+      fi
+    fi
 	exit 0
 fi
 if [ m$1 = m"restart" ]; then
@@ -120,6 +114,8 @@ if [ m$1 = m"restart" ]; then
 	done
 	echo "restart the osds"
 	ceph-osd -i 0 >/dev/null 2>&1
+    ceph-osd -i 1 >/dev/null 2>&1
+    ceph-osd -i 2 >/dev/null 2>&1
 	sleep 3
 	tem=`ceph -s | tail -n 8 | sed -n '1p' | awk '{print $4}'`
 	if [ $tem = 0 ]; then
