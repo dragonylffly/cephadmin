@@ -36,7 +36,33 @@ pkg()
     install /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib/ceph/erasure-code/libec_lrc.so
     install /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib/ceph/erasure-code/libec_isa.so
 }
-if [ m$1 = m"create" ]; then
+remove_osd()
+{
+    tem=`ps aux | grep "ceph-osd -i $1" | grep -v "grep" | awk '{print $2}'`
+    if [ "m$tem" =  "m" ]; then
+       echo not exist
+       exit 0
+    fi
+	while [ "m$tem" != "m" ]
+	do
+		kill -9 $tem
+		sleep 3
+		tem=`ps aux | grep "ceph-osd -i $1" | grep -v "grep" | awk '{print $2}'`
+	done
+    ceph osd crush remove osd.$1
+    ceph osd rm $1
+    rm -fr /var/lib/ceph/osd/ceph-$1
+}
+create_osd()
+{
+    mkdir -p /var/lib/ceph/osd/ceph-$1
+    ceph-osd -i $1 --mkfs
+    ceph osd create $1
+    ceph osd crush add osd.$1 1 root=default host=ceph2
+    ceph-osd -i $1
+}
+create_cluster()
+{ 
     if [ ! -d "/etc/ceph" ]; then
         mkdir -p /etc/ceph
     fi
@@ -66,13 +92,45 @@ if [ m$1 = m"create" ]; then
     ceph-authtool --create-keyring ceph.client.admin.keyring --gen-key -n client.admin --set-uid=0 --cap mon 'allow *' --cap osd 'allow *'
     ceph-authtool ceph.mon.keyring --import-keyring ceph.client.admin.keyring
     ceph-mon --mkfs -i 0 --monmap monmap --keyring ceph.mon.keyring
-    mkdir -p /var/lib/ceph/osd/ceph-0
-    ceph-osd -i 0 --mkfs
     ceph-mon -i 0
-    ceph osd create
-    ceph osd crush add osd.0 1.0 root=default host=ceph2
-    ceph-osd -i 0
+    for ((j=0; j<$osd_num; j++))
+    do
+        mkdir -p /var/lib/ceph/osd/ceph-$j
+        ceph-osd -i $j --mkfs
+        ceph osd create $j
+        ceph osd crush add osd.$j 1 root=default host=ceph2
+        ceph-osd -i $j
+    done
     ceph-mgr -i 0
+}
+if [ m$1 = m"remove" ]; then
+    if [ ! $# -gt 1 ]; then
+        exit 0
+    fi
+    if [ m$2 = m"osd" ]; then
+        remove_osd $3
+    fi
+fi
+if [ m$1 = m"clean" ]; then
+    if [ ! $# -gt 1 ]; then
+        exit 0
+    fi
+    ceph osd crush remove osd.$2
+    ceph osd rm $2
+    rm -fr /var/lib/ceph/osd/ceph-$2/*
+    ceph-osd -i $2 --mkfs
+    ceph osd create $2
+    ceph osd crush add osd.$2 1 root=default host=ceph2
+    ceph-osd -i $2
+fi
+if [ m$1 = m"create" ]; then
+    if [ $# -eq 1 ]; then
+        create_cluster
+        exit 0
+    fi
+    if [ m$2 = m"osd" ]; then
+        create_osd $3
+    fi 
 fi
 if [ m$1 = m"install" ]; then
     pkg
@@ -100,6 +158,11 @@ if [ m$1 = m"make" ]; then
       fi
     fi
 	exit 0
+fi
+if [ m$1 = m"show" ]; then
+    if [ $# -gt 1 ]; then
+        ps aux | grep "ceph-osd -i $2" | grep -v "grep" | awk '{print $2}'
+    fi
 fi
 if [ m$1 = m"restart" ]; then
 	pkill ceph-osd
