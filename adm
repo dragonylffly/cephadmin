@@ -28,8 +28,10 @@ pkg()
     if [ ! -d "/usr/local/lib/rados-classes" ]; then
         mkdir -p /usr/local/lib/rados-classes/
     fi
+    rm -fr /usr/local/lib/ceph/mgr/*
     rm -fr /usr/local/lib/ceph/erasure-code/*
     rm -fr /usr/local/lib/rados-classes/*
+    cp -r /home/me/codes/ceph/src/pybind/mgr /usr/local/lib/ceph
     install /home/me/codes/ceph/build/lib/libcls_rbd.so /usr/local/lib/rados-classes/libcls_rbd.so
     install /home/me/codes/ceph/build/lib/libcls_lock.so /usr/local/lib/rados-classes/libcls_lock.so
     install /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib/ceph/erasure-code/libec_jerasure.so
