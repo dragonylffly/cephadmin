@@ -21,22 +21,29 @@ if [ m$1 = m"run" ]; then
 fi
 pkg()
 {
-
+    if [ "m`ceph --version | awk '{print $5}'`" = "mluminous" ]; then
+	msg="/usr/local/lib/ceph"
+    else
+	msg="/usr/local/share/ceph"
+    fi
     if [ ! -d "/usr/local/lib/ceph/erasure-code" ]; then
         mkdir -p /usr/local/lib/ceph/erasure-code
     fi
     if [ ! -d "/usr/local/lib/rados-classes" ]; then
         mkdir -p /usr/local/lib/rados-classes/
     fi
-    rm -fr /usr/local/lib/ceph/mgr/*
+    if [ ! -d $msg ]; then
+	mkdir -p $msg
+    fi
     rm -fr /usr/local/lib/ceph/erasure-code/*
     rm -fr /usr/local/lib/rados-classes/*
-    cp -r /home/me/codes/ceph/src/pybind/mgr /usr/local/lib/ceph
-    install /home/me/codes/ceph/build/lib/libcls_rbd.so /usr/local/lib/rados-classes/libcls_rbd.so
-    install /home/me/codes/ceph/build/lib/libcls_lock.so /usr/local/lib/rados-classes/libcls_lock.so
-    install /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib/ceph/erasure-code/libec_jerasure.so
-    install /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib/ceph/erasure-code/libec_lrc.so
-    install /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib/ceph/erasure-code/libec_isa.so
+    rm -fr "$msg/mgr"
+    ln -s /home/me/codes/ceph/src/pybind/mgr "$msg/mgr"
+    ln -s /home/me/codes/ceph/build/lib/libcls_rbd.so /usr/local/lib/rados-classes/libcls_rbd.so
+    ln -s /home/me/codes/ceph/build/lib/libcls_lock.so /usr/local/lib/rados-classes/libcls_lock.so
+    ln -s /home/me/codes/ceph/build/lib/libec_jerasure.so /usr/local/lib/ceph/erasure-code/libec_jerasure.so
+    ln -s /home/me/codes/ceph/build/lib/libec_lrc.so /usr/local/lib/ceph/erasure-code/libec_lrc.so
+    ln -s /home/me/codes/ceph/build/lib/libec_isa.so /usr/local/lib/ceph/erasure-code/libec_isa.so
 }
 remove_osd()
 {
